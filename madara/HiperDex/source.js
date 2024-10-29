@@ -16143,9 +16143,9 @@ Please go to the homepage of <${this.baseUrl}> and press the cloud icon.`);
   };
 
   // src/HiperDex/HiperDex.ts
-  var DOMAIN = "https://hiperdex.com";
+  var DOMAIN = "https://hipertoon.com";
   var HiperDexInfo = {
-    version: getExportVersion("0.0.8"),
+    version: getExportVersion("0.0.9"),
     name: "HiperDex",
     description: `Extension that pulls manga from ${DOMAIN}`,
     author: "Netsky",
