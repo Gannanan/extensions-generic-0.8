@@ -894,9 +894,6 @@ var _Sources = (() => {
   });
   var import_types4 = __toESM(require_lib());
 
-  // src/MangaStream.ts
-  var import_types3 = __toESM(require_lib());
-
   // node_modules/cheerio/dist/browser/static.js
   var static_exports = {};
   __export(static_exports, {
@@ -14605,6 +14602,9 @@ var _Sources = (() => {
   var parse5 = getParse((content, options, isDocument2, context) => options._useHtmlParser2 ? parseDocument(content, options) : parseWithParse5(content, options, isDocument2, context));
   var load = getLoad(parse5, (dom, options) => options._useHtmlParser2 ? esm_default(dom, options) : renderWithParse5(dom));
 
+  // src/MangaStream.ts
+  var import_types3 = __toESM(require_lib());
+
   // src/MangaStreamParser.ts
   var import_html_entities = __toESM(require_lib2());
 
@@ -15453,6 +15453,17 @@ Please go to the homepage of <${this.baseUrl}> and press the cloud icon.`);
 
   // src/MangaTX/MangaTXParser.ts
   var MangaTXParser = class extends MangaStreamParser {
+    constructor() {
+      super(...arguments);
+      this.isLastPage = ($2, id) => {
+        let isLast = true;
+        const hasNext = Boolean($2("a. click_hilltop_click:contains(\xBB)"));
+        if (hasNext) {
+          isLast = false;
+        }
+        return isLast;
+      };
+    }
     parseChapterDetails($2, mangaId, chapterId) {
       const pages = [];
       for (const img of $2("img", "#readerarea").toArray()) {
@@ -15472,7 +15483,7 @@ Please go to the homepage of <${this.baseUrl}> and press the cloud icon.`);
   // src/MangaTX/MangaTX.ts
   var DOMAIN = "https://mangatx.cc";
   var MangaTXInfo = {
-    version: getExportVersion("0.0.0"),
+    version: getExportVersion("0.0.1"),
     name: "MangaTX",
     description: `Extension that pulls manga from ${DOMAIN}`,
     author: "Netsky",
@@ -15499,6 +15510,59 @@ Please go to the homepage of <${this.baseUrl}> and press the cloud icon.`);
       this.homescreen_sections["new_titles"].enabled = false;
       this.homescreen_sections["latest_update"].selectorFunc = ($2) => $2("div.bsx", $2("h2:contains(Latest Update)")?.parent()?.next());
       this.homescreen_sections["latest_update"].subtitleSelectorFunc = ($2, element) => $2("div.epxs", element).first().text().trim();
+    }
+    async getViewMoreItems(homepageSectionId, metadata) {
+      const page = metadata?.page ?? 1;
+      const request = App.createRequest({
+        url: `${this.baseUrl}/?page=${page}`,
+        method: "GET"
+      });
+      const response = await this.requestManager.schedule(request, 1);
+      const $2 = load(response.data);
+      const items = await this.parser.parseViewMore($2, this);
+      metadata = !this.parser.isLastPage($2, "view_more") ? { page: page + 1 } : void 0;
+      return App.createPagedResults({
+        results: items,
+        metadata
+      });
+    }
+    async getSearchResults(query, metadata) {
+      const page = metadata?.page ?? 1;
+      const request = await this.constructSearchRequest(page, query);
+      const response = await this.requestManager.schedule(request, 1);
+      this.checkResponseError(response);
+      const $2 = load(response.data);
+      const results = await this.parser.parseSearchResults($2, this);
+      const manga = [];
+      for (const result of results) {
+        let mangaId = result.slug;
+        if (await this.getUsePostIds()) {
+          mangaId = await this.slugToPostId(result.slug, result.path);
+        }
+        manga.push(App.createPartialSourceManga({
+          mangaId,
+          image: result.image,
+          title: result.title,
+          subtitle: result.subtitle
+        }));
+      }
+      metadata = !this.parser.isLastPage($2, "view_more") ? { page: page + 1 } : void 0;
+      return App.createPagedResults({
+        results: manga,
+        metadata
+      });
+    }
+    async constructSearchRequest(page, query) {
+      let urlBuilder = new URLBuilder(this.baseUrl).addPathComponent("").addQueryParameter("page", page.toString());
+      if (query?.title) {
+        urlBuilder = urlBuilder.addQueryParameter("search", encodeURIComponent(query?.title.replace(/[’–][a-z]*/g, "") ?? ""));
+      } else {
+        urlBuilder = urlBuilder.addQueryParameter("genre", getFilterTagsBySection("genres", query?.includedTags, true)).addQueryParameter("genre", getFilterTagsBySection("genres", query?.excludedTags, false, await this.supportsTagExclusion())).addQueryParameter("status", getIncludedTagBySection("status", query?.includedTags)).addQueryParameter("type", getIncludedTagBySection("type", query?.includedTags)).addQueryParameter("order", getIncludedTagBySection("order", query?.includedTags));
+      }
+      return App.createRequest({
+        url: urlBuilder.buildUrl({ addTrailingSlash: true, includeUndefinedParameters: false }),
+        method: "GET"
+      });
     }
   };
   return __toCommonJS(MangaTX_exports);
