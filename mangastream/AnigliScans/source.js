@@ -15139,7 +15139,7 @@ var _Sources = (() => {
           ...DefaultHomeSectionData,
           section: createHomeSection("new_titles", "New Titles"),
           selectorFunc: ($2) => $2("li", $2("h3:contains(New Series)")?.parent()?.next()),
-          subtitleSelectorFunc: ($2, element) => $2("span a", element).toArray().map((x) => $2(x).text().trim()).join(", "),
+          subtitleSelectorFunc: ($2, element) => $2("span", element).first().children("a").toArray().map((x) => $2(x).text().trim()).join(", "),
           getViewMoreItemsFunc: (page) => `${this.directoryPath}/?page=${page}&order=latest`,
           sortIndex: 30
         },
@@ -15147,21 +15147,21 @@ var _Sources = (() => {
           ...DefaultHomeSectionData,
           section: createHomeSection("top_alltime", "Top All Time", false),
           selectorFunc: ($2) => $2("li", $2("div.serieslist.pop.wpop.wpop-alltime")),
-          subtitleSelectorFunc: ($2, element) => $2("span a", element).toArray().map((x) => $2(x).text().trim()).join(", "),
+          subtitleSelectorFunc: ($2, element) => $2("span", element).first().children("a").toArray().map((x) => $2(x).text().trim()).join(", "),
           sortIndex: 40
         },
         "top_monthly": {
           ...DefaultHomeSectionData,
           section: createHomeSection("top_monthly", "Top Monthly", false),
           selectorFunc: ($2) => $2("li", $2("div.serieslist.pop.wpop.wpop-monthly")),
-          subtitleSelectorFunc: ($2, element) => $2("span a", element).toArray().map((x) => $2(x).text().trim()).join(", "),
+          subtitleSelectorFunc: ($2, element) => $2("span", element).first().children("a").toArray().map((x) => $2(x).text().trim()).join(", "),
           sortIndex: 50
         },
         "top_weekly": {
           ...DefaultHomeSectionData,
           section: createHomeSection("top_weekly", "Top Weekly", false),
           selectorFunc: ($2) => $2("li", $2("div.serieslist.pop.wpop.wpop-weekly")),
-          subtitleSelectorFunc: ($2, element) => $2("span a", element).toArray().map((x) => $2(x).text().trim()).join(", "),
+          subtitleSelectorFunc: ($2, element) => $2("span", element).first().children("a").toArray().map((x) => $2(x).text().trim()).join(", "),
           sortIndex: 60
         }
       };
@@ -15201,6 +15201,10 @@ var _Sources = (() => {
       return this.usePostIds ? `${this.baseUrl}/?p=${mangaId}/` : `${this.baseUrl}/${this.directoryPath}/${mangaId}/`;
     }
     async getMangaDetails(mangaId) {
+      const usePostIds = await this.getUsePostIds();
+      if (!usePostIds && !isNaN(Number(mangaId))) {
+        throw new Error(`The ID is a postId, which is not allosed, please migrate from <${this.baseUrl}> to <${this.baseUrl}> and selected "replace"! `);
+      }
       const request = App.createRequest({
         url: await this.getUsePostIds() ? `${this.baseUrl}/?p=${mangaId}/` : `${this.baseUrl}/${this.directoryPath}/${mangaId}/`,
         method: "GET"

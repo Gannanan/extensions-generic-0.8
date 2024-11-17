@@ -886,11 +886,11 @@ var _Sources = (() => {
     }
   });
 
-  // src/FreakScans/FreakScans.ts
-  var FreakScans_exports = {};
-  __export(FreakScans_exports, {
-    FreakScans: () => FreakScans,
-    FreakScansInfo: () => FreakScansInfo
+  // src/MangaTX/MangaTX.ts
+  var MangaTX_exports = {};
+  __export(MangaTX_exports, {
+    MangaTX: () => MangaTX,
+    MangaTXInfo: () => MangaTXInfo
   });
   var import_types4 = __toESM(require_lib());
 
@@ -15139,7 +15139,7 @@ var _Sources = (() => {
           ...DefaultHomeSectionData,
           section: createHomeSection("new_titles", "New Titles"),
           selectorFunc: ($2) => $2("li", $2("h3:contains(New Series)")?.parent()?.next()),
-          subtitleSelectorFunc: ($2, element) => $2("span a", element).toArray().map((x) => $2(x).text().trim()).join(", "),
+          subtitleSelectorFunc: ($2, element) => $2("span", element).first().children("a").toArray().map((x) => $2(x).text().trim()).join(", "),
           getViewMoreItemsFunc: (page) => `${this.directoryPath}/?page=${page}&order=latest`,
           sortIndex: 30
         },
@@ -15147,21 +15147,21 @@ var _Sources = (() => {
           ...DefaultHomeSectionData,
           section: createHomeSection("top_alltime", "Top All Time", false),
           selectorFunc: ($2) => $2("li", $2("div.serieslist.pop.wpop.wpop-alltime")),
-          subtitleSelectorFunc: ($2, element) => $2("span a", element).toArray().map((x) => $2(x).text().trim()).join(", "),
+          subtitleSelectorFunc: ($2, element) => $2("span", element).first().children("a").toArray().map((x) => $2(x).text().trim()).join(", "),
           sortIndex: 40
         },
         "top_monthly": {
           ...DefaultHomeSectionData,
           section: createHomeSection("top_monthly", "Top Monthly", false),
           selectorFunc: ($2) => $2("li", $2("div.serieslist.pop.wpop.wpop-monthly")),
-          subtitleSelectorFunc: ($2, element) => $2("span a", element).toArray().map((x) => $2(x).text().trim()).join(", "),
+          subtitleSelectorFunc: ($2, element) => $2("span", element).first().children("a").toArray().map((x) => $2(x).text().trim()).join(", "),
           sortIndex: 50
         },
         "top_weekly": {
           ...DefaultHomeSectionData,
           section: createHomeSection("top_weekly", "Top Weekly", false),
           selectorFunc: ($2) => $2("li", $2("div.serieslist.pop.wpop.wpop-weekly")),
-          subtitleSelectorFunc: ($2, element) => $2("span a", element).toArray().map((x) => $2(x).text().trim()).join(", "),
+          subtitleSelectorFunc: ($2, element) => $2("span", element).first().children("a").toArray().map((x) => $2(x).text().trim()).join(", "),
           sortIndex: 60
         }
       };
@@ -15201,6 +15201,10 @@ var _Sources = (() => {
       return this.usePostIds ? `${this.baseUrl}/?p=${mangaId}/` : `${this.baseUrl}/${this.directoryPath}/${mangaId}/`;
     }
     async getMangaDetails(mangaId) {
+      const usePostIds = await this.getUsePostIds();
+      if (!usePostIds && !isNaN(Number(mangaId))) {
+        throw new Error(`The ID is a postId, which is not allosed, please migrate from <${this.baseUrl}> to <${this.baseUrl}> and selected "replace"! `);
+      }
       const request = App.createRequest({
         url: await this.getUsePostIds() ? `${this.baseUrl}/?p=${mangaId}/` : `${this.baseUrl}/${this.directoryPath}/${mangaId}/`,
         method: "GET"
@@ -15447,29 +15451,56 @@ Please go to the homepage of <${this.baseUrl}> and press the cloud icon.`);
     }
   };
 
-  // src/FreakScans/FreakScans.ts
-  var DOMAIN = "https://freakscans.com";
-  var FreakScansInfo = {
+  // src/MangaTX/MangaTXParser.ts
+  var MangaTXParser = class extends MangaStreamParser {
+    parseChapterDetails($2, mangaId, chapterId) {
+      const pages = [];
+      for (const img of $2("img", "#readerarea").toArray()) {
+        const image = $2(img).attr("src") ?? "";
+        if (!image) continue;
+        pages.push(image);
+      }
+      const chapterDetails = App.createChapterDetails({
+        id: chapterId,
+        mangaId,
+        pages
+      });
+      return chapterDetails;
+    }
+  };
+
+  // src/MangaTX/MangaTX.ts
+  var DOMAIN = "https://mangatx.cc";
+  var MangaTXInfo = {
     version: getExportVersion("0.0.0"),
-    name: "FreakScans",
+    name: "MangaTX",
     description: `Extension that pulls manga from ${DOMAIN}`,
     author: "Netsky",
     authorWebsite: "http://github.com/TheNetsky",
     icon: "icon.png",
-    contentRating: import_types4.ContentRating.MATURE,
+    contentRating: import_types4.ContentRating.ADULT,
     websiteBaseURL: DOMAIN,
     intents: import_types4.SourceIntents.MANGA_CHAPTERS | import_types4.SourceIntents.HOMEPAGE_SECTIONS | import_types4.SourceIntents.CLOUDFLARE_BYPASS_REQUIRED | import_types4.SourceIntents.SETTINGS_UI,
-    sourceTags: []
+    sourceTags: [
+      {
+        text: "18+",
+        type: import_types4.BadgeColor.YELLOW
+      }
+    ]
   };
-  var FreakScans = class extends MangaStream {
+  var MangaTX = class extends MangaStream {
     constructor() {
       super(...arguments);
       this.baseUrl = DOMAIN;
+      this.usePostIds = false;
+      this.parser = new MangaTXParser();
     }
     configureSections() {
       this.homescreen_sections["new_titles"].enabled = false;
+      this.homescreen_sections["latest_update"].selectorFunc = ($2) => $2("div.bsx", $2("h2:contains(Latest Update)")?.parent()?.next());
+      this.homescreen_sections["latest_update"].subtitleSelectorFunc = ($2, element) => $2("div.epxs", element).first().text().trim();
     }
   };
-  return __toCommonJS(FreakScans_exports);
+  return __toCommonJS(MangaTX_exports);
 })();
 this.Sources = _Sources; if (typeof exports === 'object' && typeof module !== 'undefined') {module.exports.Sources = this.Sources;}
