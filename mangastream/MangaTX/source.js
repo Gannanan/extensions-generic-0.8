@@ -15483,7 +15483,7 @@ Please go to the homepage of <${this.baseUrl}> and press the cloud icon.`);
   // src/MangaTX/MangaTX.ts
   var DOMAIN = "https://mangatx.cc";
   var MangaTXInfo = {
-    version: getExportVersion("0.0.1"),
+    version: getExportVersion("0.0.2"),
     name: "MangaTX",
     description: `Extension that pulls manga from ${DOMAIN}`,
     author: "Netsky",
@@ -15553,9 +15553,9 @@ Please go to the homepage of <${this.baseUrl}> and press the cloud icon.`);
       });
     }
     async constructSearchRequest(page, query) {
-      let urlBuilder = new URLBuilder(this.baseUrl).addPathComponent("").addQueryParameter("page", page.toString());
+      let urlBuilder = new URLBuilder(this.baseUrl).addPathComponent("manga-list");
       if (query?.title) {
-        urlBuilder = urlBuilder.addQueryParameter("search", encodeURIComponent(query?.title.replace(/[’–][a-z]*/g, "") ?? ""));
+        urlBuilder = urlBuilder.addQueryParameter("search", encodeURIComponent(query?.title.replace(/[’–][a-z]*/g, "") ?? "")).addQueryParameter("page", page.toString());
       } else {
         urlBuilder = urlBuilder.addQueryParameter("genre", getFilterTagsBySection("genres", query?.includedTags, true)).addQueryParameter("genre", getFilterTagsBySection("genres", query?.excludedTags, false, await this.supportsTagExclusion())).addQueryParameter("status", getIncludedTagBySection("status", query?.includedTags)).addQueryParameter("type", getIncludedTagBySection("type", query?.includedTags)).addQueryParameter("order", getIncludedTagBySection("order", query?.includedTags));
       }
