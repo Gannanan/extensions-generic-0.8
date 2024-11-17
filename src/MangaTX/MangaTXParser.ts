@@ -27,4 +27,14 @@ export class MangaTXParser extends MangaStreamParser {
 
         return chapterDetails
     }
+
+    override isLastPage = ($: CheerioAPI, id: string): boolean => {
+        let isLast = true
+        const hasNext = Boolean($('a. click_hilltop_click:contains(»)'))
+        if (hasNext) {
+            isLast = false
+        }
+
+        return isLast
+    }
 }
