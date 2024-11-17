@@ -252,7 +252,7 @@ export abstract class MangaStream implements ChapterProviding, HomePageSectionsP
             ...DefaultHomeSectionData,
             section: createHomeSection('new_titles', 'New Titles'),
             selectorFunc: ($: cheerio.CheerioAPI) => $('li', $('h3:contains(New Series)')?.parent()?.next()),
-            subtitleSelectorFunc: ($: cheerio.CheerioAPI, element: cheerio.BasicAcceptedElems<AnyNode>) => $('span a', element).toArray().map(x => $(x).text().trim()).join(', '),
+            subtitleSelectorFunc: ($: cheerio.CheerioAPI, element: cheerio.BasicAcceptedElems<AnyNode>) => $('span', element).first().children('a').toArray().map(x => $(x).text().trim()).join(', '),
             getViewMoreItemsFunc: (page: string) => `${this.directoryPath}/?page=${page}&order=latest`,
             sortIndex: 30
         },
@@ -260,21 +260,21 @@ export abstract class MangaStream implements ChapterProviding, HomePageSectionsP
             ...DefaultHomeSectionData,
             section: createHomeSection('top_alltime', 'Top All Time', false),
             selectorFunc: ($: cheerio.CheerioAPI) => $('li', $('div.serieslist.pop.wpop.wpop-alltime')),
-            subtitleSelectorFunc: ($: cheerio.CheerioAPI, element: cheerio.BasicAcceptedElems<AnyNode>) => $('span a', element).toArray().map(x => $(x).text().trim()).join(', '),
+            subtitleSelectorFunc: ($: cheerio.CheerioAPI, element: cheerio.BasicAcceptedElems<AnyNode>) => $('span', element).first().children('a').toArray().map(x => $(x).text().trim()).join(', '),
             sortIndex: 40
         },
         'top_monthly': {
             ...DefaultHomeSectionData,
             section: createHomeSection('top_monthly', 'Top Monthly', false),
             selectorFunc: ($: cheerio.CheerioAPI) => $('li', $('div.serieslist.pop.wpop.wpop-monthly')),
-            subtitleSelectorFunc: ($: cheerio.CheerioAPI, element: cheerio.BasicAcceptedElems<AnyNode>) => $('span a', element).toArray().map(x => $(x).text().trim()).join(', '),
+            subtitleSelectorFunc: ($: cheerio.CheerioAPI, element: cheerio.BasicAcceptedElems<AnyNode>) => $('span', element).first().children('a').toArray().map(x => $(x).text().trim()).join(', '),
             sortIndex: 50
         },
         'top_weekly': {
             ...DefaultHomeSectionData,
             section: createHomeSection('top_weekly', 'Top Weekly', false),
             selectorFunc: ($: cheerio.CheerioAPI) => $('li', $('div.serieslist.pop.wpop.wpop-weekly')),
-            subtitleSelectorFunc: ($: cheerio.CheerioAPI, element: cheerio.BasicAcceptedElems<AnyNode>) => $('span a', element).toArray().map(x => $(x).text().trim()).join(', '),
+            subtitleSelectorFunc: ($: cheerio.CheerioAPI, element: cheerio.BasicAcceptedElems<AnyNode>) => $('span', element).first().children('a').toArray().map(x => $(x).text().trim()).join(', '),
             sortIndex: 60
         }
     }
@@ -287,6 +287,13 @@ export abstract class MangaStream implements ChapterProviding, HomePageSectionsP
     }
 
     async getMangaDetails(mangaId: string): Promise<SourceManga> {
+        const usePostIds = await this.getUsePostIds()
+
+        // If we don't want postIds but the mangaId is still a postId, ask user to migrate, so we change the ID to a slug instead!
+        if (!usePostIds && !isNaN(Number(mangaId))) {
+            throw new Error(`The ID is a postId, which is not allosed, please migrate from <${this.baseUrl}> to <${this.baseUrl}> and selected "replace"! `)
+        }
+
         const request = App.createRequest({
             url: await this.getUsePostIds() ? `${this.baseUrl}/?p=${mangaId}/` : `${this.baseUrl}/${this.directoryPath}/${mangaId}/`,
             method: 'GET'

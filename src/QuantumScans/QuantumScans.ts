@@ -30,6 +30,8 @@ export class QuantumScans extends MangaStream {
 
     override directoryPath = 'series'
 
+    override usePostIds = false
+
     override configureSections(): void {
         this.homescreen_sections['new_titles'].enabled = false
     }
