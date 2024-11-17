@@ -30,7 +30,7 @@ import { URLBuilder } from '../UrlBuilder'
 const DOMAIN = 'https://mangatx.cc'
 
 export const MangaTXInfo: SourceInfo = {
-    version: getExportVersion('0.0.1'),
+    version: getExportVersion('0.0.2'),
     name: 'MangaTX',
     description: `Extension that pulls manga from ${DOMAIN}`,
     author: 'Netsky',
@@ -113,11 +113,12 @@ export class MangaTX extends MangaStream {
 
     override async constructSearchRequest(page: number, query: SearchRequest): Promise<any> {
         let urlBuilder: URLBuilder = new URLBuilder(this.baseUrl)
-            .addPathComponent('')
-            .addQueryParameter('page', page.toString())
-
+            .addPathComponent('manga-list')
         if (query?.title) {
-            urlBuilder = urlBuilder.addQueryParameter('search', encodeURIComponent(query?.title.replace(/[’–][a-z]*/g, '') ?? ''))
+            urlBuilder = urlBuilder
+                .addQueryParameter('search', encodeURIComponent(query?.title.replace(/[’–][a-z]*/g, '') ?? ''))
+                .addQueryParameter('page', page.toString())
+
         } else {
             urlBuilder = urlBuilder
                 .addQueryParameter('genre', getFilterTagsBySection('genres', query?.includedTags, true))
