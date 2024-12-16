@@ -15536,27 +15536,7 @@ var _Sources = (() => {
       }
       return [App.createTagSection({ id: "0", label: "genres", tags: genres })];
     }
-    async parseSearchResults($2, source) {
-      const results = [];
-      for (const obj of $2(source.searchMangaSelector).toArray()) {
-        const slug = ($2("a", obj).attr("href") ?? "").replace(/\/$/, "").split("/").pop() ?? "";
-        const path = ($2("a", obj).attr("href") ?? "").replace(/\/$/, "").split("/").slice(-2).shift() ?? "";
-        if (!slug || !path) {
-          throw new Error(`Unable to parse slug (${slug}) or path (${path})!`);
-        }
-        const title = $2("a", obj).attr("title") ?? "";
-        const image = encodeURI(await this.getImageSrc($2("img", obj), source));
-        const subtitle = $2("span.font-meta.chapter", obj).text().trim();
-        results.push({
-          slug,
-          path,
-          image,
-          title: (0, import_html_entities.decode)(title),
-          subtitle: (0, import_html_entities.decode)(subtitle)
-        });
-      }
-      return results;
-    }
+    extensions-generic-0.8
     async parseHomeSection($2, source) {
       const items = [];
       for (const obj of $2("div.page-item-detail").toArray()) {
