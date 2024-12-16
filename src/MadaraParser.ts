@@ -183,30 +183,43 @@ export class Parser {
     }
 
     async parseSearchResults($: CheerioAPI, source: any): Promise<any[]> {
-        const results: any[] = []
+    const results: any[] = [];
 
-        for (const obj of $(source.searchMangaSelector).toArray()) {
-            const slug: string = ($('a', obj).attr('href') ?? '').replace(/\/$/, '').split('/').pop() ?? ''
-            const path: string = ($('a', obj).attr('href') ?? '').replace(/\/$/, '').split('/').slice(-2).shift() ?? ''
-            if (!slug || !path) {
-                throw new Error(`Unable to parse slug (${slug}) or path (${path})!`)
-            }
+    for (const obj of $(source.searchMangaSelector).toArray()) {
+        const linkElement = $('a', obj);
+        let href: string = linkElement.attr('href') ?? '';
 
-            const title: string = $('a', obj).attr('title') ?? ''
-            const image: string = encodeURI(await this.getImageSrc($('img', obj), source))
-            const subtitle: string = $('span.font-meta.chapter', obj).text().trim()
+        // Modifica dell'URL per aggiungere numerazione ai parametri 'genre'
+        href = href.replace(/genre%5B%5D=/g, (match, index) => `genre%5B${index / 12}%5D=`); // 12 è la lunghezza di 'genre%5B%5D='
 
-            results.push({
-                slug: slug,
-                path: path,
-                image: image,
-                title: decodeHTMLEntity(title),
-                subtitle: decodeHTMLEntity(subtitle)
-            })
+        // Aggiunta di 'op=1' se non è già presente
+        if (!href.includes('op=')) {
+            href += '&op=1';
         }
 
-        return results
+        const slug: string = href.replace(/\/$/, '').split('/').pop() ?? '';
+        const path: string = href.replace(/\/$/, '').split('/').slice(-2).shift() ?? '';
+        if (!slug || !path) {
+            throw new Error(`Unable to parse slug (${slug}) or path (${path})!`);
+        }
+
+        const title: string = linkElement.attr('title') ?? '';
+        const image: string = encodeURI(await this.getImageSrc($('img', obj), source));
+        const subtitle: string = $('span.font-meta.chapter', obj).text().trim();
+
+        results.push({
+            slug: slug,
+            path: path,
+            image: image,
+            title: decodeHTMLEntity(title),
+            subtitle: decodeHTMLEntity(subtitle),
+            href: href, // Aggiungi il link aggiornato all'oggetto risultato
+        });
     }
+
+    return results;
+}
+
 
     async parseHomeSection($: CheerioAPI, source: any): Promise<PartialSourceManga[]> {
         const items: PartialSourceManga[] = []
