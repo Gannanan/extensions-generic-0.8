@@ -17,28 +17,34 @@ export class URLBuilder {
     }
 
     buildUrl({ addTrailingSlash, includeUndefinedParameters } = { addTrailingSlash: false, includeUndefinedParameters: false }): string {
-        let finalUrl = this.baseUrl + '/'
+    let finalUrl = this.baseUrl + '/';
 
-        finalUrl += this.pathComponents.join('/')
-        finalUrl += addTrailingSlash ? '/' : ''
-        finalUrl += Object.values(this.parameters).length > 0 ? '?' : ''
-        finalUrl += Object.entries(this.parameters).map(entry => {
-            if (entry[1] == null && !includeUndefinedParameters) { return undefined }
+    finalUrl += this.pathComponents.join('/');
+    finalUrl += addTrailingSlash ? '/' : '';
+    finalUrl += Object.keys(this.parameters).length > 0 ? '?' : '';
 
-            if (Array.isArray(entry[1])) {
-                return entry[1].map(value => value || includeUndefinedParameters ? `${entry[0]}[]=${value}` : undefined)
-                    .filter(x => x !== undefined)
-                    .join('&')
-            }
+    finalUrl += Object.entries(this.parameters).map(([key, value]) => {
+        if (value == null && !includeUndefinedParameters) {
+            return undefined;
+        }
 
-            if (typeof entry[1] === 'object') {
-                return Object.keys(entry[1]).map(key => `${entry[0]}[${key}]=${entry[1][key]}`)
-                    .join('&')
-            }
+        // Gestione degli array con numerazione progressiva (es. genre[0], genre[1])
+        if (Array.isArray(value)) {
+            return value
+                .map((v, index) => v || includeUndefinedParameters ? `${key}[${index}]=${v}` : undefined)
+                .filter(x => x !== undefined)
+                .join('&');
+        }
 
-            return `${entry[0]}=${entry[1]}`
-        }).filter(x => x !== undefined).join('&')
+        // Gestione dei parametri senza valore (es. s, author, artist)
+        if (value === '' || value == null) {
+            return key;
+        }
 
-        return finalUrl
-    }
+        return `${key}=${value}`;
+    }).filter(x => x !== undefined).join('&');
+
+    return finalUrl;
+}
+
 }
