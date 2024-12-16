@@ -15536,6 +15536,40 @@ var _Sources = (() => {
       }
       return [App.createTagSection({ id: "0", label: "genres", tags: genres })];
     }
+    async parseSearchResults($2, source) {
+  const results = [];
+  
+  for (const obj of $2(source.searchMangaSelector).toArray()) {
+    let href = $2("a", obj).attr("href") ?? "";
+
+    // Modifica dell'URL per aggiungere numerazione ai parametri 'genre' e 'op=1'
+    href = href.replace(/genre%5B%5D=/g, (match, index) => `genre%5B${index / 12}%5D=`);
+    if (!href.includes("op=")) href += "&op=1";
+
+    const slug = href.replace(/\/$/, "").split("/").pop() ?? "";
+    const path = href.replace(/\/$/, "").split("/").slice(-2).shift() ?? "";
+
+    if (!slug || !path) {
+      throw new Error(`Unable to parse slug (${slug}) or path (${path})!`);
+    }
+
+    const title = $2("a", obj).attr("title") ?? "";
+    const image = encodeURI(await this.getImageSrc($2("img", obj), source));
+    const subtitle = $2("span.font-meta.chapter", obj).text().trim();
+
+    results.push({
+      slug,
+      path,
+      image,
+      title: (0, import_html_entities.decode)(title),
+      subtitle: (0, import_html_entities.decode)(subtitle),
+      href, // Aggiunta del link modificato all'oggetto risultato
+    });
+  }
+
+  return results;
+}
+
     extensions-generic-0.8
     async parseHomeSection($2, source) {
       const items = [];
